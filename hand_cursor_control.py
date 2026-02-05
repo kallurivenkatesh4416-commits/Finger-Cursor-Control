@@ -13,10 +13,26 @@ import mediapipe as mp
 import pyautogui
 import math
 import time
+try:
+    import config
+except ImportError:
+    # Use default config if config.py not found
+    class config:
+        MIN_DETECTION_CONFIDENCE = 0.7
+        MIN_TRACKING_CONFIDENCE = 0.7
+        MAX_NUM_HANDS = 1
+        SMOOTH_FACTOR = 5
+        PINCH_THRESHOLD = 0.05
+        CLICK_COOLDOWN = 0.3
+        PAUSE_COOLDOWN = 0.5
+        CAMERA_INDEX = 0
+        SHOW_LANDMARKS = True
+        PYAUTOGUI_FAILSAFE = True
+        PYAUTOGUI_PAUSE = 0.001
 
 # Configure PyAutoGUI
-pyautogui.FAILSAFE = True  # Move mouse to corner to abort
-pyautogui.PAUSE = 0.001  # Minimal pause for smooth movement
+pyautogui.FAILSAFE = config.PYAUTOGUI_FAILSAFE
+pyautogui.PAUSE = config.PYAUTOGUI_PAUSE
 
 class HandCursorController:
     def __init__(self):
@@ -24,9 +40,9 @@ class HandCursorController:
         self.mp_hands = mp.solutions.hands
         self.hands = self.mp_hands.Hands(
             static_image_mode=False,
-            max_num_hands=1,
-            min_detection_confidence=0.7,
-            min_tracking_confidence=0.7
+            max_num_hands=config.MAX_NUM_HANDS,
+            min_detection_confidence=config.MIN_DETECTION_CONFIDENCE,
+            min_tracking_confidence=config.MIN_TRACKING_CONFIDENCE
         )
         self.mp_draw = mp.solutions.drawing_utils
         
@@ -34,18 +50,22 @@ class HandCursorController:
         self.screen_width, self.screen_height = pyautogui.size()
         
         # Smoothing parameters
-        self.smooth_factor = 5
+        self.smooth_factor = config.SMOOTH_FACTOR
         self.prev_x, self.prev_y = 0, 0
         
         # Click state
         self.click_performed = False
-        self.click_cooldown = 0.3  # seconds
+        self.click_cooldown = config.CLICK_COOLDOWN
         self.last_click_time = 0
         
         # Pause state
         self.paused = False
-        self.pause_cooldown = 0.5  # seconds
+        self.pause_cooldown = config.PAUSE_COOLDOWN
         self.last_pause_toggle = 0
+        
+        # Other settings
+        self.pinch_threshold = config.PINCH_THRESHOLD
+        self.show_landmarks = config.SHOW_LANDMARKS
         
     def calculate_distance(self, point1, point2):
         """Calculate Euclidean distance between two points"""
@@ -100,12 +120,13 @@ class HandCursorController:
         # Check for hand landmarks
         if results.multi_hand_landmarks:
             for hand_landmarks in results.multi_hand_landmarks:
-                # Draw hand landmarks
-                self.mp_draw.draw_landmarks(
-                    frame, 
-                    hand_landmarks, 
-                    self.mp_hands.HAND_CONNECTIONS
-                )
+                # Draw hand landmarks if enabled
+                if self.show_landmarks:
+                    self.mp_draw.draw_landmarks(
+                        frame, 
+                        hand_landmarks, 
+                        self.mp_hands.HAND_CONNECTIONS
+                    )
                 
                 # Check for fist gesture (pause/resume)
                 current_time = time.time()
@@ -144,10 +165,8 @@ class HandCursorController:
                 thumb_tip = hand_landmarks.landmark[4]
                 distance = self.calculate_distance(thumb_tip, index_finger_tip)
                 
-                # Pinch threshold (adjust based on testing)
-                pinch_threshold = 0.05
-                
-                if distance < pinch_threshold:
+                # Use configured pinch threshold
+                if distance < self.pinch_threshold:
                     # Draw line between thumb and index finger
                     thumb_x = int(thumb_tip.x * w)
                     thumb_y = int(thumb_tip.y * h)
@@ -176,7 +195,7 @@ class HandCursorController:
     
     def run(self):
         """Main loop to capture video and process gestures"""
-        cap = cv2.VideoCapture(0)
+        cap = cv2.VideoCapture(config.CAMERA_INDEX)
         
         if not cap.isOpened():
             print("Error: Could not open webcam")
