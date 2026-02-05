@@ -20,18 +20,13 @@ PAUSE_COOLDOWN = 0.5            # Minimum time between pause toggles in seconds
 
 # Camera Settings
 CAMERA_INDEX = 0                # Camera device index (0 for default camera)
-CAMERA_WIDTH = 640              # Camera capture width (optional, None for default)
-CAMERA_HEIGHT = 480             # Camera capture height (optional, None for default)
+CAMERA_WIDTH = None             # Camera capture width (None for default)
+CAMERA_HEIGHT = None            # Camera capture height (None for default)
 
 # Display Settings
 SHOW_LANDMARKS = True           # Show hand landmark connections
-SHOW_FPS = False                # Show frames per second counter
 WINDOW_NAME = "Hand Gesture Cursor Control"
 
 # PyAutoGUI Settings
 PYAUTOGUI_FAILSAFE = True       # Enable failsafe (move to corner to abort)
 PYAUTOGUI_PAUSE = 0.001         # Pause between PyAutoGUI calls
-
-# Debug Settings
-DEBUG_MODE = False              # Enable debug output
-VERBOSE_LOGGING = False         # Enable verbose logging

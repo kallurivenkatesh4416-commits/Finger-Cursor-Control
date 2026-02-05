@@ -6,6 +6,7 @@ Tests core functionality without requiring webcam access.
 
 import unittest
 import sys
+import time
 from unittest.mock import Mock, patch, MagicMock
 import math
 
@@ -104,7 +105,6 @@ class TestHandCursorController(unittest.TestCase):
         self.assertFalse(self.controller.click_performed)
         
         # Set last click time to now
-        import time
         self.controller.last_click_time = time.time()
         
         # Should be in cooldown

@@ -89,7 +89,8 @@ class HandCursorController:
         # Also check thumb
         thumb_tip = hand_landmarks.landmark[4]
         thumb_mcp = hand_landmarks.landmark[2]
-        if thumb_tip.x < thumb_mcp.x:  # For right hand
+        # Thumb is folded if tip is closer to palm (check x-coordinate difference)
+        if abs(thumb_tip.x - thumb_mcp.x) < 0.05:
             folded_count += 1
         
         # Consider it a fist if at least 4 fingers are folded
@@ -197,6 +198,12 @@ class HandCursorController:
         """Main loop to capture video and process gestures"""
         cap = cv2.VideoCapture(config.CAMERA_INDEX)
         
+        # Set camera resolution if specified
+        if hasattr(config, 'CAMERA_WIDTH') and config.CAMERA_WIDTH:
+            cap.set(cv2.CAP_PROP_FRAME_WIDTH, config.CAMERA_WIDTH)
+        if hasattr(config, 'CAMERA_HEIGHT') and config.CAMERA_HEIGHT:
+            cap.set(cv2.CAP_PROP_FRAME_HEIGHT, config.CAMERA_HEIGHT)
+        
         if not cap.isOpened():
             print("Error: Could not open webcam")
             return
@@ -221,7 +228,8 @@ class HandCursorController:
                 processed_frame = self.process_frame(frame)
                 
                 # Display the frame
-                cv2.imshow("Hand Gesture Cursor Control", processed_frame)
+                window_name = getattr(config, 'WINDOW_NAME', "Hand Gesture Cursor Control")
+                cv2.imshow(window_name, processed_frame)
                 
                 # Exit on 'q' key press
                 if cv2.waitKey(1) & 0xFF == ord('q'):
